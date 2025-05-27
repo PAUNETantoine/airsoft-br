@@ -10,7 +10,8 @@ import { PLACES_MARAIS } from "../../../shared/const/consts-marais"
 import { PlaceType } from "../../../shared/type/types"
 import { GameInfos } from "@/ui/components/game-infos"
 
-delete (L.Icon.Default.prototype as any)._getIconUrl
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as any)._getIconUrl;
 
 L.Icon.Default.mergeOptions({
 	iconRetinaUrl: "/leaflet/marker-icon-2x.png",

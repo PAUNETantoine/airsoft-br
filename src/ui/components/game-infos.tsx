@@ -41,7 +41,7 @@ export const GameInfos = ({ playerIsOnCircle, battleRoyal }: Props) => {
 						onClick={handleStopRequest}
 						className="bg-red-600 p-1 text-sm text-white hover:bg-red-700 lg:text-lg"
 					>
-						Demander l'arrêt de la partie
+						Demander l&#39;arrêt de la partie
 					</Button>
 					<Button
 						variant="outline"
