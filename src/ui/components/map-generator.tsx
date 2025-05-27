@@ -1,10 +1,13 @@
-import React, { useEffect, useRef, useState } from "react"
+"use client"
+
+import React, { useEffect, useState } from "react"
 import {
 	INITIAL_RADIUS,
 	SHRINK_INTERVAL,
 	SHRINK_RATE,
 	ZONE_1,
 } from "../../../shared/const/consts-marais"
+import "leaflet/dist/leaflet.css"
 import { LatLng, Place, PlaceType } from "../../../shared/type/types"
 import { usePersistentLocationUpdater } from "@/hooks/use-persistent-location-updater"
 import { Circle, MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
@@ -17,15 +20,23 @@ type Props = {
 	setPlayerIsOnCircle: (b: boolean) => void
 }
 
-export const MapGenerator = ({
-	places,
-	disabledFilter,
-	battleRoyal,
-	setPlayerIsOnCircle,
-}: Props) => {
+const MapGenerator = ({
+						  places,
+						  disabledFilter,
+						  battleRoyal,
+						  setPlayerIsOnCircle,
+					  }: Props) => {
 	const [radius, setRadius] = useState<number>(INITIAL_RADIUS)
-	const lastUserPosRef = useRef<LatLng | null>(null)
+	const [lastUserPos, setLastUserPos] = useState<LatLng | null>(null)
 	const [center] = useState<LatLng>(ZONE_1)
+
+	useEffect(() => {
+		L.Icon.Default.mergeOptions({
+			iconRetinaUrl: "/leaflet/marker-icon-2x.png",
+			iconUrl: "/leaflet/marker-icon.png",
+			shadowUrl: "/leaflet/marker-shadow.png",
+		});
+	}, []);
 
 	useEffect(() => {
 		Notification.requestPermission()
@@ -43,7 +54,7 @@ export const MapGenerator = ({
 		center,
 		radius,
 		(pos) => {
-			lastUserPosRef.current = pos
+			setLastUserPos(pos)
 		},
 		battleRoyal,
 		setPlayerIsOnCircle,
@@ -68,8 +79,8 @@ export const MapGenerator = ({
 				maxZoom={19}
 				opacity={1}
 			/>
-			{lastUserPosRef.current && (
-				<Marker position={lastUserPosRef.current as LatLngExpression} />
+			{lastUserPos && (
+				<Marker position={lastUserPos as LatLngExpression} />
 			)}
 			{places
 				.filter((p) => !disabledFilter.includes(p.type))
@@ -101,3 +112,5 @@ export const MapGenerator = ({
 		</MapContainer>
 	)
 }
+
+export default MapGenerator
