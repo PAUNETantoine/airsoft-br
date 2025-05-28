@@ -1,7 +1,7 @@
-import {haversineDistance} from "@/utils/haversine-distance";
-import { useEffect, useRef } from "react";
-import {LatLng} from "../../shared/type/types";
-import {useData} from "@/contexts/datas-context";
+import { haversineDistance } from "@/utils/haversine-distance";
+import { useEffect, useRef, useState } from "react";
+import { LatLng } from "../../shared/type/types";
+import { useData } from "@/contexts/datas-context";
 
 export function usePersistentLocationUpdater(
 	center: LatLng,
@@ -10,94 +10,131 @@ export function usePersistentLocationUpdater(
 	battleRoyal: boolean,
 	setPlayerIsOnCircle: (isOnCircle: boolean) => void,
 ) {
-	const datas = useData()
-	const warnedRef = useRef(false)
-	const centerRef = useRef(center)
-	const radiusRef = useRef(radius)
+	const datas = useData();
+	const warnedRef = useRef(false);
+	const centerRef = useRef(center);
+	const radiusRef = useRef(radius);
+	const [watchStarted, setWatchStarted] = useState(false);
 
 	useEffect(() => {
-		centerRef.current = center
-		radiusRef.current = radius
-	}, [center, radius])
+		centerRef.current = center;
+		radiusRef.current = radius;
+	}, [center, radius]);
 
-	// Fonction locale pour afficher la notification
 	function showNotification(message: string) {
 		if ("serviceWorker" in navigator) {
-			navigator.serviceWorker.ready.then((registration) => {
-				registration.showNotification(message)
-			}).catch((err) => {
-				console.warn("Erreur showNotification via SW :", err)
-				alert(message) // fallback
-			})
+			navigator.serviceWorker.ready
+				.then((registration) => {
+					registration.showNotification(message);
+				})
+				.catch((err) => {
+					console.warn("Erreur showNotification via SW :", err);
+					alert(message); // fallback
+				});
 		} else {
-			alert(message) // fallback
+			alert(message); // fallback
 		}
 	}
 
-
 	useEffect(() => {
-		let currentPos: LatLng | null = null
+		let id: number;
 
-		console.log("🎯 Initialisation du hook de géolocalisation")
-
-		const id = navigator.geolocation.watchPosition(
-			async (pos) => {
-				currentPos = {
-					lat: pos.coords.latitude,
-					lng: pos.coords.longitude,
-				}
-
-				fetch("/api/players", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						name: localStorage.getItem("nomJoueur") ?? datas.nomJoueur,
-						lat: currentPos.lat,
-						lng: currentPos.lng,
-					}),
-				})
-
-				onUserPosChange(currentPos)
-
-				if (battleRoyal) {
-					const distance = haversineDistance(currentPos, centerRef.current)
-					const isInside = distance <= radiusRef.current
-
-					setPlayerIsOnCircle(isInside)
-
-					if (!isInside && !warnedRef.current) {
-						warnedRef.current = true
-						if ("Notification" in window) {
-							if (Notification.permission === "granted") {
-								showNotification("🚨 Vous êtes sorti du cercle !")
-							} else if (Notification.permission !== "denied") {
-								Notification.requestPermission().then((permission) => {
-									if (permission === "granted") {
-										showNotification("🚨 Vous êtes sorti du cercle !")
-									}
-								})
-							}
-						}
-					} else if (isInside) {
-						warnedRef.current = false
-					}
-				}
-			},
-			(err) => {
-				console.error("Erreur géolocalisation :", err)
-			},
-			{
-				enableHighAccuracy: true,
-				maximumAge: 0,
-				timeout: Infinity,
+		async function startTracking() {
+			if (!("geolocation" in navigator)) {
+				console.error("Géolocalisation non supportée.");
+				return;
 			}
-		)
+
+			// Permission API pour éviter les erreurs sur iOS
+			if ("permissions" in navigator) {
+				try {
+					const result = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+					if (result.state === "denied") {
+						alert("Permission de géolocalisation refusée.");
+						return;
+					}
+				} catch (e) {
+					console.warn("Impossible de lire les permissions :", e);
+					// on tente quand même
+				}
+			}
+
+			id = navigator.geolocation.watchPosition(
+				async (pos) => {
+					const currentPos: LatLng = {
+						lat: pos.coords.latitude,
+						lng: pos.coords.longitude,
+					};
+
+					try {
+						await fetch("/api/players", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({
+								name: localStorage.getItem("nomJoueur") ?? datas.nomJoueur,
+								lat: currentPos.lat,
+								lng: currentPos.lng,
+							}),
+						});
+					} catch (e) {
+						console.error("Erreur envoi position au serveur :", e);
+					}
+
+					onUserPosChange(currentPos);
+
+					if (battleRoyal) {
+						const distance = haversineDistance(currentPos, centerRef.current);
+						const isInside = distance <= radiusRef.current;
+
+						setPlayerIsOnCircle(isInside);
+
+						if (!isInside && !warnedRef.current) {
+							warnedRef.current = true;
+							if ("Notification" in window) {
+								if (Notification.permission === "granted") {
+									showNotification("🚨 Vous êtes sorti du cercle !");
+								} else if (Notification.permission !== "denied") {
+									Notification.requestPermission().then((permission) => {
+										if (permission === "granted") {
+											showNotification("🚨 Vous êtes sorti du cercle !");
+										}
+									});
+								}
+							}
+						} else if (isInside) {
+							warnedRef.current = false;
+						}
+					}
+				},
+				(err) => {
+					console.error("Erreur géolocalisation :", err);
+				},
+				{
+					enableHighAccuracy: true,
+					maximumAge: 0,
+					timeout: Infinity,
+				}
+			);
+		}
+
+		if (!watchStarted) {
+			const onUserInteraction = () => {
+				setWatchStarted(true);
+				startTracking();
+				window.removeEventListener("click", onUserInteraction);
+			};
+
+			// Ne pas démarrer tant que l'utilisateur n'a pas interagi (iOS fix)
+			window.addEventListener("click", onUserInteraction);
+		}
 
 		return () => {
-			navigator.geolocation.clearWatch(id)
-			console.log("🛑 Nettoyage du hook (unmount ou re-render)")
-		}
-	}, [battleRoyal, onUserPosChange, setPlayerIsOnCircle])
+			if (id) {
+				navigator.geolocation.clearWatch(id);
+				console.log("🛑 Nettoyage du hook (unmount ou re-render)");
+			}
+		};
+	}, [battleRoyal, onUserPosChange, setPlayerIsOnCircle, datas.nomJoueur, watchStarted]);
 }
