@@ -30,6 +30,7 @@ const MapGenerator = ({
 	const datas = useData()
 
 	const [radius, setRadius] = useState<number>(INITIAL_RADIUS)
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [lastUserPos, setLastUserPos] = useState<LatLng | null>(null)
 	const [center] = useState<LatLng>(ZONE_1)
 
