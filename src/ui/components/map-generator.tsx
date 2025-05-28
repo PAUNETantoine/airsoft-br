@@ -122,7 +122,7 @@ const MapGenerator = ({
 					key={i}
 					position={{ lat: player.lat, lng: player.lng }}
 					icon={L.icon({
-						iconUrl: player.name !== datas.nomJoueur ? "/player.png" : "/player_yellow.png",
+						iconUrl: player.name !== datas.nomJoueur ? "/player_blue.png" : "/player_yellow.png",
 						iconSize: [30, 30],
 						iconAnchor: [15, 30],
 					})}
