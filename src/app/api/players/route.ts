@@ -15,7 +15,6 @@ export async function GET() {
         }
     }
 
-    // Retourner uniquement les joueurs actifs (sans lastUpdate)
     return NextResponse.json(players.map(({ ...p }) => p))
 }
 
