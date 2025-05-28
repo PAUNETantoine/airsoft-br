@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useState } from "react"
+import {useEffect, useState} from "react"
 
 import { GameMenu } from "@/ui/components/game-menu"
 import { GameInfos } from "@/ui/components/game-infos"
@@ -15,6 +15,17 @@ const MapGenerator = dynamic(() => import("@/ui/components/map-generator"), {
 export default function Marais() {
 	const [disabledFilter, setDisabledFilter] = useState<PlaceType[]>([])
 	const [playerIsOnCircle, setPlayerIsOnCircle] = useState<boolean>(true)
+
+	useEffect(() => {
+		if ("serviceWorker" in navigator) {
+			navigator.serviceWorker.register("/sw.js").then(() => {
+				console.log("✅ Service Worker enregistré")
+			}).catch((err) => {
+				console.error("❌ Erreur SW :", err)
+			})
+		}
+	}, [])
+
 
 	return (
 		<main className="flex h-full flex-col items-center justify-center lg:gap-6">

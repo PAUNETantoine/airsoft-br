@@ -27,7 +27,7 @@ export const GameMenu = ({ disabledFilter, setDisabledFilter }: Props) => {
 	}
 
 	return (
-		<div className="flex w-full max-w-full flex-col items-start gap-3 overflow-auto rounded-xl bg-white p-4 shadow lg:flex-col">
+		<div className="flex w-full max-w-full flex-col items-start gap-3 overflow-auto rounded-xl bg-white p-4">
 			<div className="flex flex-col gap-2">
 				<h2 className="text-sm font-bold whitespace-nowrap lg:text-lg">
 					Filtres des lieux
@@ -41,7 +41,7 @@ export const GameMenu = ({ disabledFilter, setDisabledFilter }: Props) => {
 				</button>
 			</div>
 
-			<div className="flex flex-row gap-4 lg:flex-col">
+			<div className="flex flex-row gap-4">
 				{ALL_TYPES.map((type) => (
 					<label key={type} className="flex items-center space-x-2">
 						<input

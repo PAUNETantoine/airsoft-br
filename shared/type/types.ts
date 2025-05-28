@@ -12,3 +12,18 @@ export type Place = {
 }
 
 export type PlaceType = "base" | "place" | "player" | "flag"
+
+export type Player = {
+	name: string
+	lat: number
+	lng: number
+}
+
+export type Game = {
+	type: "elimination" | "capture-flag" | "domination" | "escort" | "survival"
+	started: boolean
+	time: number
+	zoneRad: number
+	zoneLat: number
+	zoneLng: number
+}

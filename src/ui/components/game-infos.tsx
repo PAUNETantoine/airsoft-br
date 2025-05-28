@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import {useEffect} from "react"
 import { Button } from "@/ui/components/button"
+import {useData} from "@/contexts/datas-context";
 
 type Props = {
 	playerIsOnCircle: boolean
@@ -9,12 +10,23 @@ type Props = {
 }
 
 export const GameInfos = ({ playerIsOnCircle, battleRoyal }: Props) => {
-	const [teamName, setTeamName] = useState<string | null>(null)
+	const datas = useData()
+
+	useEffect(() => {
+		const nomjoueur = localStorage.getItem("nomJoueur")
+		const team = localStorage.getItem("team")
+
+
+		if(nomjoueur) datas.setNomJoueur(nomjoueur)
+
+		if(team) datas.setTeam(team)
+	}, [])
 
 	const handleTeamSelection = () => {
 		const name = prompt("Entrez le nom de votre équipe :")
 		if (name) {
-			setTeamName(name)
+			datas.setTeam(name)
+			localStorage.setItem("team", name)
 			console.log("Équipe choisie :", name)
 		}
 	}
@@ -52,10 +64,10 @@ export const GameInfos = ({ playerIsOnCircle, battleRoyal }: Props) => {
 					</Button>
 				</div>
 			</div>
-			{teamName && (
-				<div className="pb-2 text-center text-sm text-slate-400">
-					Équipe sélectionnée :{" "}
-					<span className="font-semibold">{teamName}</span>
+			{datas.team && datas.nomJoueur && (
+				<div className="flex flex-row pb-2 text-center text-sm text-slate-400 gap-8 items-center justify-center">
+					<span className="font-semibold">Équipe sélectionnée: {datas.team}</span>
+					<span className={"font-semibold"}>Votre pseudo: {datas.nomJoueur}</span>
 				</div>
 			)}
 		</footer>
