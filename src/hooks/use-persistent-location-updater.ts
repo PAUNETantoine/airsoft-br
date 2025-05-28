@@ -45,7 +45,7 @@ export function usePersistentLocationUpdater(
 				return;
 			}
 
-			// Permission API pour éviter les erreurs sur iOS
+			// Vérification permission
 			if ("permissions" in navigator) {
 				try {
 					const result = await navigator.permissions.query({ name: "geolocation" as PermissionName });
@@ -120,14 +120,8 @@ export function usePersistentLocationUpdater(
 		}
 
 		if (!watchStarted) {
-			const onUserInteraction = () => {
-				setWatchStarted(true);
-				startTracking();
-				window.removeEventListener("click", onUserInteraction);
-			};
-
-			// Ne pas démarrer tant que l'utilisateur n'a pas interagi (iOS fix)
-			window.addEventListener("click", onUserInteraction);
+			setWatchStarted(true);
+			startTracking();
 		}
 
 		return () => {
